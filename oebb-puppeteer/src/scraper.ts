@@ -33,7 +33,10 @@ export async function fetchTicketsIntoDB(repo: Repository<Ticket>, email: string
     puppeteer.use(StealthPlugin())
 
     // puppeteer usage as normal
-    let browser = await puppeteer.launch({ headless: false });
+    let browser = await puppeteer.launch({
+        headless: false,
+        args: ['--no-sandbox']
+    });
     console.log('Running tests..')
     const page = await browser.newPage()
     await page.setViewport({ 'width': 1280, 'height': 800 })

@@ -51,6 +51,10 @@ app.get("/calendar", (req, res) => {
     calendar.method(ICalCalendarMethod.REQUEST);
     Ticket.find().then(tickets => {
         tickets.forEach(ticket => {
+            if (!ticket.departureTime || !ticket.arrivalTime || isNaN(ticket.departureTime.getTime()) || isNaN(ticket.arrivalTime.getTime())) {
+                console.log(`Skipping ticket ${ticket.identifier} due to missing departure or arrival time.`)
+                return
+            }
             calendar.createEvent({
                 start: ticket.departureTime,
                 end: ticket.arrivalTime,
@@ -58,14 +62,14 @@ app.get("/calendar", (req, res) => {
                 location: `${ticket.from}`,
                 id: ticket.identifier,
             });
-            res.end(calendar.toString());
         });
+        res.end(calendar.toString());
     })
 
 
 })
 
-await fetchTicketsIntoDB(ticketRepository, email, password)
+// await fetchTicketsIntoDB(ticketRepository, email, password)
 setInterval(async () => {
     await fetchTicketsIntoDB(ticketRepository, email, password)
 }, 15 * 60 * 1000) // every 15 minutes
