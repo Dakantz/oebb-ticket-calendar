@@ -1,0 +1,26 @@
+services:
+  oebb-puppeteer:
+    build:
+      context: ./oebb-puppeteer
+    container_name: oebb-puppeteer
+    restart: unless-stopped
+    environment:
+      - PORT=3000
+      - DB_FILE=/app/data/database.sqlite
+    env_file:
+      - .env
+    volumes:
+      - ./data:/app/data
+    labels:
+      # Traefik configuration, Hostname needs to be changed
+      - traefik.http.routers.oebb-puppeteer-http.rule=Host(`oebb-puppeteer.hafen.dakantz.at`)
+      - traefik.http.routers.oebb-puppeteer-http.entrypoints=http
+      - traefik.http.services.oebb-puppeteer.loadbalancer.server.port=3000
+      # - traefik.http.routers.oebb-puppeteer-http.middlewares=redirect
+      # - traefik.http.routers.oebb-puppeteer-https.rule=Host(`oebb-puppeteer.hafen.dakantz.at`)
+      # - traefik.http.routers.oebb-puppeteer-https.entrypoints=https
+      # - traefik.http.routers.oebb-puppeteer-https.tls=true
+      # - traefik.http.routers.oebb-puppeteer-https.tls.certresolver=letsencrypt
+      # - traefik.http.middlewares.redirect.redirectscheme.scheme=https
+    networks:
+      - web

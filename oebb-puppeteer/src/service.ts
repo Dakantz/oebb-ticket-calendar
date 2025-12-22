@@ -14,7 +14,7 @@ import express from "express";
 
 const TicketsSourceDB = new DataSource({
     type: "sqlite",
-    database: "tickets.sqlite",
+    database: process.env.DB_FILE || "tickets.sqlite",
     entities: [Ticket],
 })
 
@@ -68,7 +68,7 @@ app.get("/calendar", (req, res) => {
 await fetchTicketsIntoDB(ticketRepository, email, password)
 setInterval(async () => {
     await fetchTicketsIntoDB(ticketRepository, email, password)
-},15 * 60 * 1000) // every 15 minutes
+}, 15 * 60 * 1000) // every 15 minutes
 
 console.log("Scraper service is running, fetching tickets every 15 minutes.")
 
