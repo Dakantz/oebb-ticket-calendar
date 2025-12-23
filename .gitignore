@@ -6,5 +6,8 @@ dist/
 .DS_Store
 *.png
 *.db
+# also ignore sqlite journal
+
 *.sqlite
+*.sqlite-journal
 .vscode/

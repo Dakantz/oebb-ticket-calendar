@@ -34,10 +34,10 @@ export async function fetchTicketsIntoDB(repo: Repository<Ticket>, email: string
 
     // puppeteer usage as normal
     let browser = await puppeteer.launch({
-        headless: false,
+        headless: true,
         args: ['--no-sandbox']
     });
-    console.log('Running tests..')
+    console.log('Running extraction..')
     const page = await browser.newPage()
     await page.setViewport({ 'width': 1280, 'height': 800 })
 
@@ -45,11 +45,11 @@ export async function fetchTicketsIntoDB(repo: Repository<Ticket>, email: string
         // console.log("Response:", resp.url());
         if (resp.url().endsWith("/infocards/by-ids/tickets")) {
             resp.text().then(text => {
-                console.log("Response text:", text);
+                // console.log("Response text:", text);
             });
             (async () => {
                 let data = await resp.json()
-                console.log("Response data:", data);
+                // console.log("Response data:", data);
                 let ticket_data = data as Infocards
                 for (let ticket_info of ticket_data.infocards) {
                     let ticket = fromTicketData(ticket_info)
@@ -82,8 +82,11 @@ export async function fetchTicketsIntoDB(repo: Repository<Ticket>, email: string
     await page.screenshot({ 'path': 'oebb_logged_in.png' })
     await asyncTimeout(1000)
     await page.waitForSelector(".tickets-button")
+    console.log("Logged in successfully.")
     await asyncTimeout(1000)
     await page.click(".tickets-button")
+    await asyncTimeout(2000)
+    console.log("Navigated to tickets page.")
     while (true) {
         try {
             await page.waitForSelector(".more-button", { timeout: 5000 })

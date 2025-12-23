@@ -24,7 +24,7 @@ try {
 } catch (error) {
     console.error("Error during Data Source initialization", error)
 }
-// await TicketsSourceDB.synchronize()
+await TicketsSourceDB.synchronize()
 const ticketRepository = TicketsSourceDB.getRepository(Ticket)
 
 
@@ -69,7 +69,7 @@ app.get("/calendar", (req, res) => {
 
 })
 
-// await fetchTicketsIntoDB(ticketRepository, email, password)
+await fetchTicketsIntoDB(ticketRepository, email, password)
 setInterval(async () => {
     await fetchTicketsIntoDB(ticketRepository, email, password)
 }, 15 * 60 * 1000) // every 15 minutes

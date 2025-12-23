@@ -6,7 +6,7 @@ services:
     restart: unless-stopped
     environment:
       - PORT=3000
-      - DB_FILE=/app/data/database.sqlite
+      - DB_FILE=/app/data/database_2.sqlite
     env_file:
       - .env
     volumes:
@@ -24,3 +24,12 @@ services:
       # - traefik.http.middlewares.redirect.redirectscheme.scheme=https
     networks:
       - web
+
+    security_opt:
+      - seccomp=unconfined # Needed for Chrome to run in a container
+    # Uncomment the following lines if you need to run the container in a non-privileged mode
+    # cap_add:
+    #   - SYS_ADMIN
+networks:
+  web:
+    external: true

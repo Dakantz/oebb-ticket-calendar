@@ -9,6 +9,9 @@
   "peerDependencies": {
     "typescript": "^5"
   },
+  "scripts": {
+    "start":"bun run src/service.ts"
+  },
   "dependencies": {
     "@types/express": "^5.0.6",
     "express": "^5.2.1",
