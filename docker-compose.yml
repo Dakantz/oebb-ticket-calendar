@@ -7,10 +7,14 @@ services:
     environment:
       - PORT=3000
       - DB_FILE=/app/data/database_2.sqlite
+      - SCREENSHOT_PATH=/app/screenshots
     env_file:
       - .env
     volumes:
       - ./data:/app/data
+      - ./screenshots:/app/screenshots
+      - "/etc/timezone:/etc/timezone:ro"
+      - "/etc/localtime:/etc/localtime:ro"
     labels:
       # Traefik configuration, Hostname needs to be changed
       - traefik.http.routers.oebb-puppeteer-http.rule=Host(`oebb-puppeteer.hafen.dakantz.at`)
@@ -24,7 +28,6 @@ services:
       # - traefik.http.middlewares.redirect.redirectscheme.scheme=https
     networks:
       - web
-
     security_opt:
       - seccomp=unconfined # Needed for Chrome to run in a container
     # Uncomment the following lines if you need to run the container in a non-privileged mode

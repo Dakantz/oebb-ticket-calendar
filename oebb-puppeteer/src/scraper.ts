@@ -27,18 +27,9 @@ const asyncTimeout = (ms: number) => new Promise(resolve => setTimeout(resolve, 
 const email = ""
 const password = ""
 
-export async function fetchTicketsIntoDB(repo: Repository<Ticket>, email: string, password: string) {
+const screenshotPath = process.env.SCREENSHOT_PATH || "/screenshots"
+async function scrapeTickets(page: puppeteer.Page) {
 
-    // add stealth plugin and use defaults (all evasion techniques)
-    puppeteer.use(StealthPlugin())
-
-    // puppeteer usage as normal
-    let browser = await puppeteer.launch({
-        headless: true,
-        args: ['--no-sandbox']
-    });
-    console.log('Running extraction..')
-    const page = await browser.newPage()
     await page.setViewport({ 'width': 1280, 'height': 800 })
 
     page.on("response", (resp) => {
@@ -69,17 +60,17 @@ export async function fetchTicketsIntoDB(repo: Repository<Ticket>, email: string
     })
 
     await page.goto("https://shop.oebbtickets.at/de/ticket")
-    await page.screenshot({ 'path': 'oebb_preloading.png' })
+    await page.screenshot({ 'path': `${screenshotPath}/oebb_preloading.png` })
     await page.waitForSelector(".account-button")
-    await page.screenshot({ path: 'oebb.png', fullPage: true })
+    await page.screenshot({ path: `${screenshotPath}/oebb.png`, fullPage: true })
     await page.click(".account-button")
     await asyncTimeout(2000)
     await page.type('#username', email)
     await page.type('#password', password)
     await asyncTimeout(5000)
-    await page.screenshot({ 'path': 'oebb_logging_in.png' })
+    await page.screenshot({ 'path': `${screenshotPath}/oebb_logging_in.png` })
     await page.click('#kc-login')
-    await page.screenshot({ 'path': 'oebb_logged_in.png' })
+    await page.screenshot({ 'path': `${screenshotPath}/oebb_logged_in.png`, fullPage: true })
     await asyncTimeout(1000)
     await page.waitForSelector(".tickets-button")
     console.log("Logged in successfully.")
@@ -115,9 +106,30 @@ export async function fetchTicketsIntoDB(repo: Repository<Ticket>, email: string
         }
     }
 
-    await page.screenshot({ 'path': 'oebb_archived_tickets.png' })
+    await page.screenshot({ 'path': `${screenshotPath}/oebb_archived_tickets.png`, fullPage: true })
 
 
     await browser.close()
     console.log(`All done, check the screenshot. ✨`)
+}
+export async function fetchTicketsIntoDB(repo: Repository<Ticket>, email: string, password: string) {
+
+    // add stealth plugin and use defaults (all evasion techniques)
+    puppeteer.use(StealthPlugin())
+
+    // puppeteer usage as normal
+    let browser = await puppeteer.launch({
+        headless: true,
+        args: ['--no-sandbox']
+    });
+    console.log('Running extraction..')
+    const page = await browser.newPage()
+    try {
+        await scrapeTickets(page)
+    }catch (err) {
+        console.error("Error during scraping:", err)
+        await page.screenshot({ 'path': `${screenshotPath}/oebb_error.png`, fullPage: true })
+    } finally {
+        await browser.close()
+    }
 }
