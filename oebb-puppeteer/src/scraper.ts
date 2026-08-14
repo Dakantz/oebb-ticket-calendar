@@ -1,4 +1,4 @@
-import type { Browser } from 'puppeteer';
+import type { Browser, Page } from 'puppeteer';
 import puppeteer from 'puppeteer-extra';
 
 import { DataSource, Repository } from "typeorm"
@@ -27,8 +27,8 @@ const asyncTimeout = (ms: number) => new Promise(resolve => setTimeout(resolve, 
 const email = ""
 const password = ""
 
-const screenshotPath = process.env.SCREENSHOT_PATH || "/screenshots"
-async function scrapeTickets(page: puppeteer.Page) {
+const screenshotPath = process.env.SCREENSHOT_PATH || "./screenshots"
+async function scrapeTickets(page: Page, repo: Repository<Ticket> = ticketRepository) {
 
     await page.setViewport({ 'width': 1280, 'height': 800 })
 
@@ -61,6 +61,20 @@ async function scrapeTickets(page: puppeteer.Page) {
 
     await page.goto("https://shop.oebbtickets.at/de/ticket")
     await page.screenshot({ 'path': `${screenshotPath}/oebb_preloading.png` })
+
+    // click on cloudfare button if it exists
+    try {
+        await page.waitForSelector("#challenge-stage", { timeout: 5000 })
+        console.log("Cloudflare challenge detected, waiting for it to complete...")
+        await page.screenshot({ 'path': `${screenshotPath}/oebb_cloudflare.png` })
+        await page.click("#challenge-stage")
+        await page.screenshot({ 'path': `${screenshotPath}/oebb_cloudflare.png` })
+        await page.waitForSelector("#challenge-stage", { hidden: true, timeout: 60000 })
+        console.log("Cloudflare challenge completed.")
+    } catch (e) {
+        console.log("No Cloudflare challenge detected.")
+    }
+
     await page.waitForSelector(".account-button")
     await page.screenshot({ path: `${screenshotPath}/oebb.png`, fullPage: true })
     await page.click(".account-button")
@@ -108,9 +122,6 @@ async function scrapeTickets(page: puppeteer.Page) {
 
     await page.screenshot({ 'path': `${screenshotPath}/oebb_archived_tickets.png`, fullPage: true })
 
-
-    await browser.close()
-    console.log(`All done, check the screenshot. ✨`)
 }
 export async function fetchTicketsIntoDB(repo: Repository<Ticket>, email: string, password: string) {
 
@@ -119,17 +130,18 @@ export async function fetchTicketsIntoDB(repo: Repository<Ticket>, email: string
 
     // puppeteer usage as normal
     let browser = await puppeteer.launch({
-        headless: true,
+        headless: false,
         args: ['--no-sandbox']
     });
     console.log('Running extraction..')
     const page = await browser.newPage()
     try {
-        await scrapeTickets(page)
-    }catch (err) {
+        await scrapeTickets(page, repo)
+    } catch (err) {
         console.error("Error during scraping:", err)
         await page.screenshot({ 'path': `${screenshotPath}/oebb_error.png`, fullPage: true })
     } finally {
         await browser.close()
+        console.log(`All done, check the screenshot.`)
     }
 }
