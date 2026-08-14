@@ -58,10 +58,11 @@ app.get("/calendar", (req, res) => {
             calendar.createEvent({
                 start: ticket.departureTime,
                 end: ticket.arrivalTime,
-                summary: `${ticket.from} nach ${ticket.to} with ${ticket.info.connection?.sections.map(s => `${s.category.name} ${s.category.number}`).join(", ")}`,
+                summary: `${ticket.from} to ${ticket.to} with ${ticket.info.connection?.sections.map(s => `${s.category.name} ${s.category.number}`).join(", ")}`,
                 location: `${ticket.from}`,
                 id: ticket.identifier,
-                timezone: 'Etc/UTC',
+                timezone: 'Europe/Vienna',
+
             });
         });
         res.end(calendar.toString());
