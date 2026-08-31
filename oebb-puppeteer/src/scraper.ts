@@ -62,30 +62,28 @@ async function scrapeTickets(page: Page, repo: Repository<Ticket> = ticketReposi
     await page.goto("https://shop.oebbtickets.at/de/ticket")
     await page.screenshot({ 'path': `${screenshotPath}/oebb_preloading.png` })
 
-    // click on cloudfare button if it exists
-    try {
-        await page.waitForSelector("#challenge-stage", { timeout: 5000 })
-        console.log("Cloudflare challenge detected, waiting for it to complete...")
-        await page.screenshot({ 'path': `${screenshotPath}/oebb_cloudflare.png` })
-        await page.click("#challenge-stage")
-        await page.screenshot({ 'path': `${screenshotPath}/oebb_cloudflare.png` })
-        await page.waitForSelector("#challenge-stage", { hidden: true, timeout: 60000 })
-        console.log("Cloudflare challenge completed.")
-    } catch (e) {
-        console.log("No Cloudflare challenge detected.")
-    }
+    await page.setUserAgent({ userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36" })
 
     await page.waitForSelector(".account-button")
     await page.screenshot({ path: `${screenshotPath}/oebb.png`, fullPage: true })
     await page.click(".account-button")
-    await asyncTimeout(2000)
+    await page.waitForSelector('#username')
     await page.type('#username', email)
     await page.type('#password', password)
-    await asyncTimeout(5000)
     await page.screenshot({ 'path': `${screenshotPath}/oebb_logging_in.png` })
-    await page.click('#kc-login')
+    // OEBB added a FriendlyCaptcha widget on the login form; it fills a hidden
+    // "fcSolution" field asynchronously once it finishes its (invisible) challenge.
+    // Submitting before that resolves silently rejects the login, which is the
+    // "protection" that broke the old fixed-delay flow.
+    await page.waitForFunction(
+        `!!document.querySelector('input[name="fcSolution"]')?.value`,
+        { timeout: 30000 }
+    )
+    await Promise.all([
+        page.waitForNavigation({ waitUntil: 'networkidle0' }),
+        page.click('#kc-login'),
+    ])
     await page.screenshot({ 'path': `${screenshotPath}/oebb_logged_in.png`, fullPage: true })
-    await asyncTimeout(1000)
     await page.waitForSelector(".tickets-button")
     console.log("Logged in successfully.")
     await asyncTimeout(1000)
@@ -131,7 +129,14 @@ export async function fetchTicketsIntoDB(repo: Repository<Ticket>, email: string
     // puppeteer usage as normal
     let browser = await puppeteer.launch({
         headless: false,
-        args: ['--no-sandbox']
+        args: [
+            '--no-sandbox',
+            '--disable-setuid-sandbox',
+            '--disable-dev-shm-usage',
+            '--disable-accelerated-2d-canvas',
+            '--disable-gpu',
+            '--window-size=1920,1080',
+        ],
     });
     console.log('Running extraction..')
     const page = await browser.newPage()

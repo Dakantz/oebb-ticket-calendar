@@ -11,3 +11,6 @@ dist/
 *.sqlite
 *.sqlite-journal
 .vscode/
+client_secret.json
+**/__pycache__/
+*.eml
